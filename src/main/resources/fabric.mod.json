@@ -1,0 +1,23 @@
+{
+	"schemaVersion": 1,
+	"id": "modchatapi",
+	"version": "${version}",
+	"name": "Mod Chat API",
+	"description": "Intercepta mensagens do chat, envia para um web app e executa a resposta (comando ou mensagem).",
+	"authors": [
+		"Victor Luz"
+	],
+	"license": "MIT",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"br.com.arcasoltec.modchatapi.ModChatApiClient"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.16.0",
+		"fabric-api": "*",
+		"minecraft": "~1.21.8",
+		"java": ">=21"
+	}
+}
