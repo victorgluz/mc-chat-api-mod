@@ -17,8 +17,10 @@ import java.util.UUID;
  * Envia mensagens do chat para o web app e executa a ação retornada.
  *
  * Contrato da API — o web app recebe via POST:
- *   { "type": "chat"|"game", "message": "...", "senderName": "...", "senderUuid": "...", "timestamp": 123 }
+ *   { "type": "chat"|"game"|"tell", "message": "...", "senderName": "...", "senderUuid": "...", "timestamp": 123 }
+ *   Quando type="tell": mensagem é o texto do /tell, senderName é o jogador que sussurou.
  * e deve responder:
+ *   { "type": "tell",    "value": "resposta" }          -> responde com /tell para o remetente original
  *   { "type": "command", "value": "give @s diamond" }   -> executa como comando (com ou sem "/")
  *   { "type": "chat",    "value": "olá!" }              -> envia como mensagem no chat
  *   { "type": "none" }                                  -> não faz nada
@@ -30,7 +32,7 @@ public class ChatApiService {
 			.connectTimeout(Duration.ofSeconds(10))
 			.build();
 
-	public void forwardMessage(String type, String message, String senderName, UUID senderUuid) {
+	public void forwardMessage(String type, String message, String senderName, UUID senderUuid, String replyTarget) {
 		ModConfig config = ModChatApiClient.getConfig();
 
 		JsonObject payload = new JsonObject();
@@ -55,14 +57,14 @@ public class ChatApiService {
 
 		ModChatApiClient.LOGGER.info("[debug] POST {} -> {}", config.endpointUrl, GSON.toJson(payload));
 		httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-				.thenAccept(this::handleResponse)
+				.thenAccept(response -> handleResponse(response, replyTarget))
 				.exceptionally(e -> {
 					ModChatApiClient.LOGGER.error("Falha na requisição para {}", config.endpointUrl, e);
 					return null;
 				});
 	}
 
-	private void handleResponse(HttpResponse<String> response) {
+	private void handleResponse(HttpResponse<String> response, String replyTarget) {
 		ModChatApiClient.LOGGER.info("[debug] resposta HTTP {}: {}", response.statusCode(), response.body());
 		if (response.statusCode() < 200 || response.statusCode() >= 300) {
 			ModChatApiClient.LOGGER.warn("Web app respondeu HTTP {}: {}", response.statusCode(), response.body());
@@ -92,10 +94,10 @@ public class ChatApiService {
 
 		// Interação com o jogo precisa acontecer na thread do cliente.
 		MinecraftClient client = MinecraftClient.getInstance();
-		client.execute(() -> executeAction(client, actionType, value));
+		client.execute(() -> executeAction(client, actionType, value, replyTarget));
 	}
 
-	private void executeAction(MinecraftClient client, String actionType, String value) {
+	private void executeAction(MinecraftClient client, String actionType, String value, String replyTarget) {
 		ClientPlayNetworkHandler networkHandler = client.getNetworkHandler();
 		if (networkHandler == null) {
 			ModChatApiClient.LOGGER.warn("Resposta recebida fora de um mundo, ação ignorada: {} {}", actionType, value);
@@ -103,6 +105,13 @@ public class ChatApiService {
 		}
 
 		switch (actionType) {
+			case "tell" -> {
+				if (value == null || value.isBlank() || replyTarget == null || replyTarget.isBlank()) {
+					return;
+				}
+				networkHandler.sendChatCommand("tell " + replyTarget + " " + value);
+				ModChatApiClient.LOGGER.info("Whisper enviado para {} pelo web app: {}", replyTarget, value);
+			}
 			case "command" -> {
 				if (value == null || value.isBlank()) {
 					return;

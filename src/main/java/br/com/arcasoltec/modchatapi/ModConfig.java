@@ -7,6 +7,8 @@ import net.fabricmc.loader.api.FabricLoader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Configuração persistida em config/modchatapi.json.
@@ -33,11 +35,21 @@ public class ModConfig {
 	/** Se não vazio, só encaminha mensagens que começam com este prefixo (ex.: "!"). */
 	public String triggerPrefix = "";
 
+	/** Se não vazia, só encaminha mensagens de jogadores desta lista (/chatapi whitelist <nick>). */
+	public List<String> whitelist = new ArrayList<>();
+
+	/** Liga/desliga o autoeat (come automaticamente quando fome ≤ 4). */
+	public boolean autoEat = false;
+
 	public static ModConfig load() {
 		if (Files.exists(PATH)) {
 			try {
 				ModConfig config = GSON.fromJson(Files.readString(PATH), ModConfig.class);
 				if (config != null) {
+					// Configs salvas por versões antigas não têm o campo
+					if (config.whitelist == null) {
+						config.whitelist = new ArrayList<>();
+					}
 					return config;
 				}
 			} catch (Exception e) {
