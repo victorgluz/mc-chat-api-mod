@@ -19,7 +19,7 @@ public class ModConfig {
 	public boolean enabled = true;
 
 	/** URL do web app que recebe as mensagens via POST. */
-	public String endpointUrl = "http://localhost:8080/api/chat";
+	public String endpointUrl = "http://localhost:8080/chat";
 
 	/** Tempo máximo (ms) de espera pela resposta do web app. */
 	public int timeoutMs = 10000;

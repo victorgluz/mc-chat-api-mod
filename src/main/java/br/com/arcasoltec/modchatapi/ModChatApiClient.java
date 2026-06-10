@@ -24,11 +24,14 @@ public class ModChatApiClient implements ClientModInitializer {
 
 		// Mensagens de chat de jogadores.
 		ClientReceiveMessageEvents.CHAT.register((message, signedMessage, sender, params, receptionTimestamp) -> {
+			String text = message.getString();
+			LOGGER.info("[debug] chat recebido de {}: {}", sender != null ? sender.getName() : "(null)", text);
 			if (!shouldForward(sender)) {
+				LOGGER.info("[debug] ignorado: {}", config.enabled ? "mensagem do próprio jogador (ignoreOwnMessages)" : "mod desativado");
 				return;
 			}
-			String text = message.getString();
 			if (!matchesPrefix(text)) {
+				LOGGER.info("[debug] ignorado: não começa com o prefixo '{}'", config.triggerPrefix);
 				return;
 			}
 			SERVICE.forwardMessage(

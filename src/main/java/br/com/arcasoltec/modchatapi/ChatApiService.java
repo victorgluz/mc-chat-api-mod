@@ -53,6 +53,7 @@ public class ChatApiService {
 			return;
 		}
 
+		ModChatApiClient.LOGGER.info("[debug] POST {} -> {}", config.endpointUrl, GSON.toJson(payload));
 		httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
 				.thenAccept(this::handleResponse)
 				.exceptionally(e -> {
@@ -62,6 +63,7 @@ public class ChatApiService {
 	}
 
 	private void handleResponse(HttpResponse<String> response) {
+		ModChatApiClient.LOGGER.info("[debug] resposta HTTP {}: {}", response.statusCode(), response.body());
 		if (response.statusCode() < 200 || response.statusCode() >= 300) {
 			ModChatApiClient.LOGGER.warn("Web app respondeu HTTP {}: {}", response.statusCode(), response.body());
 			return;

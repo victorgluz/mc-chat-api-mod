@@ -1,0 +1,23 @@
+# Gradle
+.gradle/
+build/
+
+# Fabric Loom
+run/
+remappedSrc/
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+bin/
+.classpath
+.project
+.settings/
+
+# SO
+.DS_Store
+Thumbs.db
+
+# Claude Code (configuração local da máquina)
+.claude/settings.local.json
